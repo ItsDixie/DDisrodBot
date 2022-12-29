@@ -10,6 +10,6 @@ and then paste it in the end of the code.
 -
 For working command /report you need feel rephook value.
 Generate webhook in your server and paste it.
---------------
+-
 
 Love ya guys :D
