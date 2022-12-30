@@ -2,12 +2,15 @@ import disnake
 from disnake.ext import tasks, commands
 import json
 
-global bufer
-
-bufer = [0, False] ## 0 - привязан к серверу? | 1 - айди привязаного сервера |
-
 with open('TOKEN_HERE.txt', 'r+') as token_file:
     token = token_file.read()
+
+
+
+global bufer, acs
+
+bufer = [0, False] ## 0 - привязан к серверу? | 1 - айди привязаного сервера |
+acs = False ##accses
 
 
 intents = disnake.Intents.default()
@@ -15,7 +18,8 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix='$', intents=intents)
 
-def ExportData(bufer):
+############################################
+def exportData(bufer):
     
     data = {
             'bufer': bufer 
@@ -29,61 +33,73 @@ def LoadData():
         data = json.load(save)
         bufer = data['bufer']
     return bufer
+##################################################
 
 @bot.event ## works when it ready
 async def on_ready():
     print(f'We have logged in as {bot.user}')
     try: ## проверяю на наличие файлика и обьявляю переменные
-        importData()
+        LoadData()
         global bufer
-        bufer = importData()
-        print(f'Loading succesful. {importData()}')
+        bufer = LoadData()
+        print(f'Loading succesful. {LoadData()}')
     except:
         print('No saves found')
 
 @bot.event
 async def on_guild_join(guild):
     bufer[0] = guild.id
+    bufer[1] = True
+    print(f'I have joined on server! {guild} Hope all working!')
+    save.start(bufer)
 
-class Loggin(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.accses = False
+##################################################
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        
+@bot.event
+async def on_message(message):
         if (message.author == bot.user): ## проверка чтобы не было цикла
             return
-        
-        print(bufer, self.accses)
 
-        if ((bufer[0] == message.author.guild.id) and (bufer[1])):
-            self.accses = True
-            checker(self)
+        if ((bufer[0] == message.author.guild.id)):
+            global acs
+            acs = True  
         else:
-            self.accses = False
+            acs = False
+            
+        print(acs)
+        await bot.process_commands(message)
+
+
+class AdminCommands(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        
 
     @commands.command()
-    async def link(self, ctx):
-        if ((not(bufer[1])) and (not(bufer[0] == ctx.author.guild.id))):
-            bufer[1] = True
-    
-    def checker(self):
-        if self.accses:
-
-            @commands.command()
-            async def debug(self, ctx):
-                await ctx.reply(f'{self.accses} {self.bufer[1]}, {self.bufer[0]}')
+    async def debug(self, ctx):
+        if acs:
+            await ctx.reply(f'{acs} {bufer[1]}, {bufer[0]}')
 
 
-            @commands.command()
-            async def hello(self, ctx, *, member: disnake.Member = None):
+    @commands.command()
+    async def hello(self, ctx, *, member: disnake.Member = None):
+        member = member or ctx.author
+        if acs:
+            await ctx.send(f'Hello {member.name}~')
 
-                    """Says hello"""
-                    member = member or ctx.author
-                    await ctx.send(f'Hello {member.name}~')
 
 
-bot.add_cog(Loggin(bot))
+#------------tasks------------------#
+
+@tasks.loop(minutes=1.0) ## цикл сохранения переменных в файл линия 180
+async def save(bufer):
+    try:
+        exportData(bufer)
+    except Exception:
+        pass
+
+#------------tasks------------------#
+
+
+bot.add_cog(AdminCommands(bot))
 bot.run(token)
