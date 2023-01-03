@@ -1,7 +1,7 @@
 import disnake
 from disnake import SyncWebhook
 from disnake.ext import tasks, commands
-import random
+from random import random, randint
 from  graphic_engine import Map
 from utils import rand, cardValue, randToCard
 from parsing import workAI, giveQuot
@@ -432,7 +432,16 @@ async def unwarn(slash_inter, member:disnake.Member):
          await slash_inter.send("you don't have permission to use this command", ephemeral = True)
 #------------warns-----------------------------#
 
+#------------DnD assets------------------------#
+@bot.slash_command(description='Кинуть двадцатигранник')
+async def d20(slash_inter):
+    await slash_inter.send(f'На двадцатиграннике... {randint(1, 20)}')
 
+@bot.slash_command(description='Кинуть шестигранник')
+async def d6(slash_inter):
+    await slash_inter.send(f'На шестиграннике... {randint(1, 6)}')
+
+#------------DnD assets------------------------#
 
 
 ##---------END OF COMMANDS---------------------##
